@@ -15,6 +15,19 @@ interface DeepSeekChatSession {
   lastResponseMessageId: number | null;
 }
 
+/**
+ * Reasoner-mode instruction: ask the model to wrap its chain-of-thought in a
+ * `<think>...</think>` text tag inside the final answer. The web API only
+ * surfaces thinking via the `thinking_content` field, which text-based clients
+ * (e.g. DSH) never see; a closed tag in the plain text is the only portable
+ * signal. A missing closing `</think>` also tells callers the thinking was
+ * truncated mid-way.
+ */
+const THINK_TAG_PROMPT =
+  '思考模式指令（必须遵守）：请先用中文标签 <think> 与 </think> 包裹你的完整思考过程，' +
+  '思考结束后再输出最终回答。要求：1) 思考内容只能出现在 <think>...</think> 内部；' +
+  '2) 标签必须成对闭合，不得截断；3) 最终回答放在标签之后，不得重复思考内容。';
+
 export class DeepSeekProvider extends BaseProvider {
   readonly info: ProviderInfo = {
     id: 'deepseek-web',
@@ -163,6 +176,12 @@ export class DeepSeekProvider extends BaseProvider {
       // client's own tool definitions as text (no native function calling).
       const isThinking = req.model.includes('reasoner');
       let prompt = buildWebPrompt(req.messages);
+      // Reasoner mode: instruct the model to write its chain-of-thought inside
+      // a <think>...</think> tag so text-only clients (DSH etc.) can still see
+      // the thinking and detect mid-way truncation (unclosed tag).
+      if (isThinking) {
+        prompt = `${THINK_TAG_PROMPT}\n\n${prompt}`;
+      }
       if (req.tools && req.tools.length > 0) {
         const toolLines = req.tools.map((t, i) => {
           const fn = t.function;
