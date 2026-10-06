@@ -8,15 +8,23 @@ import { execSync } from "node:child_process";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
-const [src, outDir, outJsonArg] = process.argv.slice(2);
-if (!src) {
-  console.error("Usage: node extract-dsh-tools.mjs <asar-or-unpacked-dir> [<output-dir>] [<output-json>]");
-  process.exit(1);
-}
 // Chinese file names are kept inside this script (UTF-8 source) so that callers
 // never pass non-ASCII arguments through the shell (PowerShell 5.1 mangles them).
 const MD_NAME = "DSH工具提示-完整版.md";
 const JSON_NAME = "DSH工具提示-完整版.json";
+
+const [src, outDir, outJsonArg] = process.argv.slice(2);
+// --digest <dir>: print the tool name list from the previously generated JSON (ASCII-safe helper).
+if (src === "--digest") {
+  const dir = outDir ?? ".";
+  const j = JSON.parse(readFileSync(join(dir, JSON_NAME), "utf8"));
+  console.log(j.map((t) => t.name).join(", "));
+  process.exit(0);
+}
+if (!src) {
+  console.error("Usage: node extract-dsh-tools.mjs <asar-or-unpacked-dir> [<output-dir>] [<output-json>]");
+  process.exit(1);
+}
 const outMd = outDir ? join(outDir, MD_NAME) : MD_NAME;
 const outJson = outJsonArg ?? (outDir ? join(outDir, JSON_NAME) : JSON_NAME);
 

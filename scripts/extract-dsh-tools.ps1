@@ -29,7 +29,7 @@ if ($SendToDeepSeek) {
     Write-Host "[2/3] DEEPSEEK_API_KEY not set - skipping DeepSeek send (set it in env to enable)"
   } else {
     Write-Host "[2/3] sending tool list digest to DeepSeek ..."
-    $digest = node -e "const j=JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'));console.log(j.map(t=>t.name).join(', '))" (Join-Path $OutDir "DSH工具提示-完整版.json")
+    $digest = node (Join-Path $PSScriptRoot "extract-dsh-tools.mjs") --digest $OutDir
     $body = @{
       model = "deepseek-chat"
       messages = @(
@@ -58,9 +58,9 @@ if ($Push) {
   Set-Location $Root
   git add -A
   git commit -m "docs: sync DSH tool schema extraction (extract-dsh-tools)"
-  git push origin main
+  git push origin master:main
   if ($LASTEXITCODE -ne 0) { throw "git push failed (exit $LASTEXITCODE)" }
-  Write-Host "pushed to git@github.com:bgsgp/WMB.git (main)"
+  Write-Host "pushed to git@github.com:bgsgp/WMB.git (master:main)"
 } else {
   Write-Host "[3/3] skipping push (use -Push to commit & push)"
 }
