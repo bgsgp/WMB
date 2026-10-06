@@ -246,7 +246,7 @@ export class DeepSeekProvider extends BaseProvider {
     bearer: string,
     isThinking: boolean,
     refFileIds: string[] = [],
-  ): Promise<{ ok: boolean; text: string; error?: string }> {
+  ): Promise<{ ok: boolean; text: string; thinkText?: string; error?: string }> {
     // PoW per round
     let powResponse: string;
     try {
@@ -311,14 +311,100 @@ export class DeepSeekProvider extends BaseProvider {
         const reader = res.body?.getReader();
         if (!reader) return { error: 'No response body' };
 
+        // Parse DeepSeek's JSON-patch SSE in-page. Fragments arrive as a
+        // snapshot or APPEND array (each has id + type: THINK | RESPONSE),
+        // then content deltas target "response/fragments/-1/content" where
+        // -1 is the *current last* fragment. We must track per-fragment type,
+        // otherwise thinking deltas and answer deltas (same path) get merged.
         const decoder = new TextDecoder();
-        let fullText = '';
+        let buf = '';
+        const frags = new Map<number, { type: string; content: string }>();
+        const idOrder: number[] = [];
+        let lastFragId: number | null = null;
+        let lastPath = '';
+        let responseMsgId: number | null = null;
+
+        const handleData = (dataStr: string) => {
+          const body = dataStr.trim();
+          if (!body || body === '{}' || body === '[DONE]') return;
+          let j: any;
+          try { j = JSON.parse(body); } catch { return; }
+
+          // "ready" payload: request/response message ids
+          if (j.request_message_id != null && j.response_message_id != null) {
+            responseMsgId = j.response_message_id;
+            return;
+          }
+
+          // Full response snapshot
+          if (j?.v?.response) {
+            const r = j.v.response;
+            if (r.message_id != null) responseMsgId = r.message_id;
+            for (const f of (r.fragments || [])) {
+              if (!frags.has(f.id)) { frags.set(f.id, { type: f.type, content: '' }); idOrder.push(f.id); }
+              const fr = frags.get(f.id)!;
+              fr.type = f.type;
+              if (typeof f.content === 'string') fr.content = f.content;
+              lastFragId = f.id;
+            }
+            return;
+          }
+
+          // New fragments appended as an array
+          if (j.p === 'response/fragments' && j.o === 'APPEND' && Array.isArray(j.v)) {
+            for (const f of j.v) {
+              if (!frags.has(f.id)) {
+                frags.set(f.id, { type: f.type, content: typeof f.content === 'string' ? f.content : '' });
+                idOrder.push(f.id);
+              }
+              lastFragId = f.id;
+            }
+            return;
+          }
+
+          // Content deltas: path explicit or carried from the previous event
+          const path: string = j.p ?? lastPath;
+          if (j.p) lastPath = j.p;
+          const m = /^response\/fragments\/(-1|\d+)\/content$/.exec(path);
+          if (m && typeof j.v === 'string') {
+            const id = m[1] === '-1' ? lastFragId : idOrder[Number(m[1])];
+            if (id != null && frags.has(id)) {
+              const fr = frags.get(id)!;
+              if (j.o === 'SET') fr.content = j.v;
+              else fr.content += j.v;
+            }
+          }
+        };
+
+        const consumeFrame = (frame: string) => {
+          const norm = frame.replace(/\r\n/g, '\n');
+          const dataLines = norm.split('\n')
+            .filter(l => l.startsWith('data:'))
+            .map(l => l.slice(5).replace(/^ /, ''));
+          if (dataLines.length) handleData(dataLines.join('\n'));
+        };
+
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          fullText += decoder.decode(value, { stream: true });
+          buf += decoder.decode(value, { stream: true });
+          let idx;
+          while ((idx = buf.indexOf('\n\n')) !== -1) {
+            consumeFrame(buf.slice(0, idx));
+            buf = buf.slice(idx + 2);
+          }
         }
-        return { data: fullText };
+        if (buf.trim()) consumeFrame(buf);
+
+        const join = (ty: string) =>
+          idOrder.filter(id => frags.get(id)!.type === ty).map(id => frags.get(id)!.content).join('');
+        return {
+          parsed: {
+            responseText: join('RESPONSE'),
+            thinkText: join('THINK'),
+            responseMsgId,
+          },
+        };
       } catch (e: any) {
         return { error: e.message };
       }
@@ -336,54 +422,18 @@ export class DeepSeekProvider extends BaseProvider {
       return { ok: false, text: '', error: `DeepSeek API error: ${sseResult.error}` };
     }
 
-    // Parse SSE and aggregate assistant text
-    const lines = (sseResult.data ?? '').split('\n');
-    let lastPath = '';
-    let text = '';
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith('event:')) continue;
-      if (!trimmed.startsWith('data: ')) continue;
-
-      const raw = trimmed.slice(6);
-      if (raw === '[DONE]' || raw === '{}') continue;
-
-      try {
-        const parsed = JSON.parse(raw);
-
-        if (parsed?.response_message_id != null && parsed?.request_message_id != null) {
-          chatSession.lastResponseMessageId = parsed.response_message_id;
-        }
-
-        if (parsed?.v?.response) {
-          if (parsed.v.response.message_id != null) {
-            chatSession.lastResponseMessageId = parsed.v.response.message_id;
-          }
-          const fragments = parsed.v.response.fragments;
-          if (Array.isArray(fragments)) {
-            for (const f of fragments) {
-              if (f?.type === 'RESPONSE' && typeof f.content === 'string') {
-                text += f.content;
-              }
-            }
-          }
-          continue;
-        }
-
-        const path = parsed.p ?? lastPath;
-        if (parsed.p) lastPath = parsed.p;
-        const value = parsed.v;
-
-        const CONTENT_PATHS = ['response/content', 'response/fragments/-1/content'];
-        if (CONTENT_PATHS.includes(path) && typeof value === 'string') {
-          text += value;
-        }
-      } catch {
-        // Skip non-JSON lines
-      }
+    // The in-page parser already separated THINK fragments from RESPONSE
+    // fragments and tracked the message-id chain.
+    const parsed = sseResult.parsed as
+      | { responseText: string; thinkText: string; responseMsgId: number | null }
+      | undefined;
+    if (!parsed) {
+      return { ok: false, text: '', error: 'DeepSeek: failed to parse completion SSE' };
     }
-
-    return { ok: true, text };
+    if (parsed.responseMsgId != null) {
+      chatSession.lastResponseMessageId = parsed.responseMsgId;
+    }
+    return { ok: true, text: parsed.responseText, thinkText: parsed.thinkText };
   }
 
   /** Upload images to the DeepSeek web API and return their file ids. */
