@@ -90,6 +90,13 @@ export function anthropicRoutes(registry: ProviderRegistry): Hono {
         await s.write(formatPing());
         await s.write(formatContentBlockStart(0));
 
+        // SSE-comment heartbeat: the provider aggregates the whole upstream
+        // turn (web reasoner can think for minutes) without any event; keep
+        // the connection alive so clients don't time out mid-thinking.
+        const heartbeat = setInterval(() => {
+          s.write(`: keepalive\n\n`).catch(() => {});
+        }, 10_000);
+
         let stopReason = 'end_turn';
         try {
           for await (const event of provider.chat({ model, messages, stream: true })) {
@@ -103,6 +110,8 @@ export function anthropicRoutes(registry: ProviderRegistry): Hono {
           }
         } catch (err) {
           await s.write(formatContentBlockDelta(0, `\n\nError: ${(err as Error).message}`));
+        } finally {
+          clearInterval(heartbeat);
         }
 
         await s.write(formatContentBlockStop(0));
