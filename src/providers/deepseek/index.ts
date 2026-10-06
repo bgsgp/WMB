@@ -163,7 +163,13 @@ export class DeepSeekProvider extends BaseProvider {
       // client's own tool definitions as text (no native function calling).
       const isThinking = req.model.includes('reasoner');
       let prompt = buildWebPrompt(req.messages);
-      if (req.tools && req.tools.length > 0) {
+      // Inject tool definitions only on the FIRST turn of each logical
+      // session. On later turns the model still sees them in the DeepSeek
+      // conversation context; resending every turn wastes tokens and makes
+      // the traffic look more bot-like. A freshly (re)created session has no
+      // parent message yet and therefore counts as the first turn.
+      const isFirstTurn = chatSession.lastResponseMessageId === null;
+      if (req.tools && req.tools.length > 0 && isFirstTurn) {
         const toolLines = req.tools.map((t, i) => {
           const fn = t.function;
           const params = fn.parameters ? JSON.stringify(fn.parameters) : '{}';
