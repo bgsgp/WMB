@@ -78,7 +78,7 @@ describe('OpenAI Formatter', () => {
     it('formats model list', () => {
       const models: (ModelInfo & { id: string })[] = [
         { id: 'claude-web/claude-sonnet-4-6', name: 'Claude Sonnet', contextWindow: 200000, maxOutput: 8192 },
-        { id: 'deepseek-web/deepseek-v4', name: 'DeepSeek V4', contextWindow: 128000, maxOutput: 8192 },
+        { id: 'deepseek-web/deepseek-flash', name: 'DeepSeek Flash', contextWindow: 128000, maxOutput: 8192 },
       ];
       const res = formatModelsResponse(models);
       expect(res.object).toBe('list');

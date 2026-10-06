@@ -36,6 +36,10 @@ export interface ChatRequest {
   stream: boolean;
   tools?: ToolDef[];
   signal?: AbortSignal;
+  /** Optional client identifier (OpenAI `user` field). Used by providers to
+   *  key logical conversations so multi-turn/parallel requests from different
+   *  client sessions do not bleed into each other. */
+  user?: string;
 }
 
 export abstract class BaseProvider {

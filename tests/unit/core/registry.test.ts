@@ -20,7 +20,7 @@ describe('ProviderRegistry', () => {
     deepseek = new MockProvider('deepseek-web', {
       authenticated: false,
       models: [
-        { id: 'deepseek-v4', name: 'DeepSeek V4', contextWindow: 128000, maxOutput: 8192 },
+        { id: 'deepseek-flash', name: 'DeepSeek Flash', contextWindow: 128000, maxOutput: 8192 },
       ],
     });
     registry.register(claude);
@@ -34,9 +34,9 @@ describe('ProviderRegistry', () => {
   });
 
   it('resolves provider with different model', async () => {
-    const result = await registry.resolve('deepseek-web/deepseek-v4');
+    const result = await registry.resolve('deepseek-web/deepseek-flash');
     expect(result.provider).toBe(deepseek);
-    expect(result.model).toBe('deepseek-v4');
+    expect(result.model).toBe('deepseek-flash');
   });
 
   it('throws InvalidModelError for unknown provider', async () => {
@@ -44,9 +44,9 @@ describe('ProviderRegistry', () => {
   });
 
   it('resolves model without provider prefix via fuzzy match', async () => {
-    const result = await registry.resolve('deepseek-v4');
+    const result = await registry.resolve('deepseek-flash');
     expect(result.provider).toBe(deepseek);
-    expect(result.model).toBe('deepseek-v4');
+    expect(result.model).toBe('deepseek-flash');
   });
 
   it('resolves model without slash via fuzzy match', async () => {

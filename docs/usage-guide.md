@@ -33,7 +33,7 @@ npx web-model-bridge
 | -------------- | ----------------------- | ------------------------ |
 | Claude Web     | claude.ai               | Sonnet 4.6, Haiku 4.5    |
 | ChatGPT Web    | chatgpt.com             | GPT-5.3, GPT-5.4 Mini    |
-| DeepSeek Web   | chat.deepseek.com       | DeepSeek V4, V4 Reasoner |
+| DeepSeek Web   | chat.deepseek.com       | DeepSeek Flash, Flash Reasoner |
 | Kimi Web       | kimi.moonshot.cn        | Kimi K2.5                |
 | Qwen Web       | chat.qwen.ai            | Qwen 3.5 Plus, QwQ       |
 | GLM Web        | chatglm.cn              | GLM-5                    |
@@ -70,8 +70,8 @@ npx web-model-bridge
             "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
           },
           {
-            "id": "deepseek-web/deepseek-v4",
-            "name": "DeepSeek V4 (Free)",
+            "id": "deepseek-web/deepseek-flash",
+            "name": "DeepSeek Flash (Free)",
             "contextWindow": 128000,
             "maxTokens": 8192,
             "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
@@ -114,7 +114,7 @@ Claude Code 会将请求发送到 `http://localhost:3456/v1/messages` → web-mo
 3. **OpenAI API Key**: 任意值（如 `not-needed`）
 4. 点击 **+ Add Model**，输入模型 ID，例如：
   - `claude-web/claude-sonnet-4-6`
-  - `deepseek-web/deepseek-v4`
+  - `deepseek-web/deepseek-flash`
   - `qwen-web/qwen-3.5-plus`
 
 #### 其他支持 OpenAI API 的工具
@@ -136,8 +136,8 @@ Claude Code 会将请求发送到 `http://localhost:3456/v1/messages` → web-mo
 | `claude-web/claude-haiku-4-5`       | Claude Haiku 4.5     | 200K | claude.ai               |
 | `chatgpt-web/gpt-5.3`               | GPT-5.3              | 128K | chatgpt.com             |
 | `chatgpt-web/gpt-5.4-mini`          | GPT-5.4 Mini         | 128K | chatgpt.com             |
-| `deepseek-web/deepseek-v4`          | DeepSeek V4          | 128K | chat.deepseek.com       |
-| `deepseek-web/deepseek-v4-reasoner` | DeepSeek V4 Reasoner | 128K | chat.deepseek.com       |
+| `deepseek-web/deepseek-flash`          | DeepSeek Flash          | 128K | chat.deepseek.com       |
+| `deepseek-web/deepseek-flash-reasoner` | DeepSeek Flash Reasoner | 128K | chat.deepseek.com       |
 | `kimi-web/kimi-k2.5`                | Kimi K2.5            | 256K | kimi.moonshot.cn        |
 | `qwen-web/qwen-3.5-plus`            | Qwen 3.5 Plus        | 262K | chat.qwen.ai            |
 | `qwen-web/qwq`                      | QwQ                  | 32K  | chat.qwen.ai            |

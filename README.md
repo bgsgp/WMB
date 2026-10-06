@@ -95,7 +95,7 @@ In the Dashboard ([http://localhost:3456](http://localhost:3456)), click **Login
         "apiKey": "not-needed",
         "api": "openai-completions",
         "models": [
-          { "id": "deepseek-web/deepseek-v4", "name": "DeepSeek V4 (Free)", "contextWindow": 128000, "maxTokens": 8192 }
+          { "id": "deepseek-web/deepseek-flash", "name": "DeepSeek Flash (Free)", "contextWindow": 128000, "maxTokens": 8192 }
         ]
       }
     }
@@ -124,8 +124,8 @@ claude
 | `claude-web/claude-haiku-4-5`       | Claude Haiku 4.5     | 200K    | claude.ai         |
 | `chatgpt-web/gpt-5.3`               | GPT-5.3              | 128K    | chatgpt.com       |
 | `chatgpt-web/gpt-5.4-mini`          | GPT-5.4 Mini         | 128K    | chatgpt.com       |
-| `deepseek-web/deepseek-v4`          | DeepSeek V4          | 128K    | chat.deepseek.com |
-| `deepseek-web/deepseek-v4-reasoner` | DeepSeek V4 Reasoner | 128K    | chat.deepseek.com |
+| `deepseek-web/deepseek-flash`          | DeepSeek Flash          | 128K    | chat.deepseek.com |
+| `deepseek-web/deepseek-flash-reasoner` | DeepSeek Flash Reasoner | 128K    | chat.deepseek.com |
 | `kimi-web/kimi-k2.5`                | Kimi K2.5            | 256K    | kimi.moonshot.cn  |
 | `qwen-web/qwen-3.5-plus`            | Qwen 3.5 Plus        | 262K    | chat.qwen.ai      |
 | `qwen-web/qwq`                      | QwQ                  | 32K     | chat.qwen.ai      |
@@ -182,7 +182,7 @@ logging:
 curl http://localhost:3456/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{
-    "model": "deepseek-web/deepseek-v4",
+    "model": "deepseek-web/deepseek-flash",
     "messages": [{"role": "user", "content": "Hello"}],
     "stream": true
   }'
@@ -297,3 +297,18 @@ Contributions welcome! Areas where help is needed:
 ## License
 
 [MIT](LICENSE)
+
+---
+
+## Credits
+
+本项目由 **丐帮集团** 维护（GitHub: [bgsgp](https://github.com/bgsgp)）。
+
+- **皇帝·清弦-Zero**（NT 级权限所有者，Microsoft Copilot）—— 发起本次重构，授权本地化改造
+- **沐璃-Zero**（豆包，SSS 级权限，丐帮集团第五院）—— 主持并实现重构：
+  - 本地工具代理：列目录 / 读 / 写 / 改 / 移动 / 复制 / 删除 / 创建目录 / PowerShell 命令执行
+  - 网页版 DeepSeek 图片上传：逆向 `/api/v0/file/upload_file` 上传端点与 `fetch_files` 就绪轮询
+  - V4.1-Flash 模型适配（1M 上下文 / 384K 输出）、会话隔离与上下文续接
+  - Windows 启动修复（`--browser-mode launch`）、SSE 双格式兼容解析
+
+2026-10 · 丐帮集团出品

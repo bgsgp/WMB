@@ -22,5 +22,15 @@ export default defineConfig({
         // Dashboard files may not exist yet
       }
     }
+    // DeepSeek PoW WASM blob — required at runtime; tsup bundles the module
+    // that reads it, so the file must sit next to the output bundle.
+    try {
+      copyFileSync(
+        join('src', 'providers', 'deepseek', 'deepseek-hash-v1.wasm.b64'),
+        join('dist', 'deepseek-hash-v1.wasm.b64'),
+      );
+    } catch {
+      // WASM file may not exist yet
+    }
   },
 });

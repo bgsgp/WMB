@@ -60,7 +60,7 @@ export function openaiRoutes(registry: ProviderRegistry): Hono {
       return stream(c, async (s) => {
         let isFirst = true;
         try {
-          for await (const event of provider.chat({ model, messages, stream: true })) {
+          for await (const event of provider.chat({ model, messages, stream: true, user: body.user, tools: body.tools })) {
             const chunk = formatStreamChunk(runId, body.model, event, isFirst);
             await s.write(`data: ${JSON.stringify(chunk)}\n\n`);
             isFirst = false;
@@ -81,7 +81,7 @@ export function openaiRoutes(registry: ProviderRegistry): Hono {
     // Non-streaming
     let fullContent = '';
     let lastError: string | null = null;
-    for await (const event of provider.chat({ model, messages, stream: false })) {
+    for await (const event of provider.chat({ model, messages, stream: false, user: body.user, tools: body.tools })) {
       if (event.type === 'text_delta') {
         fullContent += event.delta;
       } else if (event.type === 'error') {

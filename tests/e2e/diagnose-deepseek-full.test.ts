@@ -55,7 +55,7 @@ describe('DeepSeek full flow', () => {
 
     const events: StreamEvent[] = [];
     for await (const ev of provider.chat({
-      model: 'deepseek-v4',
+      model: 'deepseek-flash',
       messages: [{ role: 'user', content: 'Say exactly: "HELLO"' }],
       stream: false,
     })) {

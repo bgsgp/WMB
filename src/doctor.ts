@@ -41,7 +41,9 @@ export async function runDoctor(): Promise<CheckResult[]> {
   if (chromePath) {
     let versionInfo = '';
     try {
-      versionInfo = ' — ' + execSync(`"${chromePath}" --version`, { encoding: 'utf-8' }).trim();
+      // --version on Windows can hang indefinitely when another Chrome
+      // instance is holding the process pipes; bound it hard.
+      versionInfo = ' — ' + execSync(`"${chromePath}" --version`, { encoding: 'utf-8', timeout: 5000, windowsHide: true }).trim();
     } catch {
       // Version detection failed, but Chrome exists
     }

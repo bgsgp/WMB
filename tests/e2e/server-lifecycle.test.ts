@@ -37,7 +37,7 @@ function startTestServer(opts?: {
     }),
     new MockProvider('deepseek-web', {
       authenticated: true,
-      models: [{ id: 'deepseek-v4', name: 'DeepSeek V4', contextWindow: 128000, maxOutput: 8192 }],
+      models: [{ id: 'deepseek-flash', name: 'DeepSeek Flash', contextWindow: 128000, maxOutput: 8192 }],
     }),
   ];
 
@@ -226,7 +226,7 @@ describe('E2E: Server Lifecycle', () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'deepseek-web/deepseek-v4',
+        model: 'deepseek-web/deepseek-flash',
         messages: [{ role: 'user', content: 'Hi' }],
         stream: false,
       }),

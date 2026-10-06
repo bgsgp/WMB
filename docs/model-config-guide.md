@@ -22,8 +22,8 @@
 | `claude-web/claude-haiku-4-5` | Claude Haiku 4.5 | 200,000 | 8,192 | claude.ai |
 | `chatgpt-web/gpt-5.3` | GPT-5.3 | 128,000 | 4,096 | chatgpt.com |
 | `chatgpt-web/gpt-5.4-mini` | GPT-5.4 Mini | 128,000 | 4,096 | chatgpt.com |
-| `deepseek-web/deepseek-v4` | DeepSeek V4 | 128,000 | 8,192 | chat.deepseek.com |
-| `deepseek-web/deepseek-v4-reasoner` | DeepSeek V4 Reasoner | 128,000 | 8,192 | chat.deepseek.com |
+| `deepseek-web/deepseek-flash` | DeepSeek Flash | 128,000 | 8,192 | chat.deepseek.com |
+| `deepseek-web/deepseek-flash-reasoner` | DeepSeek Flash Reasoner | 128,000 | 8,192 | chat.deepseek.com |
 | `kimi-web/kimi-k2.5` | Kimi K2.5 | 256,000 | 8,192 | kimi.com |
 | `qwen-web/qwen-3.5-plus` | Qwen 3.5 Plus | 262,000 | 8,192 | chat.qwen.ai |
 | `qwen-web/qwq` | QwQ | 32,000 | 8,192 | chat.qwen.ai |
@@ -95,15 +95,15 @@
             "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
           },
           {
-            "id": "deepseek-web/deepseek-v4",
-            "name": "DeepSeek V4 (Free)",
+            "id": "deepseek-web/deepseek-flash",
+            "name": "DeepSeek Flash (Free)",
             "contextWindow": 128000,
             "maxTokens": 8192,
             "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
           },
           {
-            "id": "deepseek-web/deepseek-v4-reasoner",
-            "name": "DeepSeek V4 Reasoner (Free)",
+            "id": "deepseek-web/deepseek-flash-reasoner",
+            "name": "DeepSeek Flash Reasoner (Free)",
             "contextWindow": 128000,
             "maxTokens": 8192,
             "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
@@ -252,8 +252,8 @@ ANTHROPIC_BASE_URL="http://localhost:3456" ANTHROPIC_API_KEY="not-needed" claude
 | `claude-web/claude-haiku-4-5` | Claude Haiku 4.5 |
 | `chatgpt-web/gpt-5.3` | GPT-5.3 |
 | `chatgpt-web/gpt-5.4-mini` | GPT-5.4 Mini |
-| `deepseek-web/deepseek-v4` | DeepSeek V4 |
-| `deepseek-web/deepseek-v4-reasoner` | DeepSeek V4 Reasoner |
+| `deepseek-web/deepseek-flash` | DeepSeek Flash |
+| `deepseek-web/deepseek-flash-reasoner` | DeepSeek Flash Reasoner |
 | `kimi-web/kimi-k2.5` | Kimi K2.5 |
 | `qwen-web/qwen-3.5-plus` | Qwen 3.5 Plus |
 | `qwen-web/qwq` | QwQ |
@@ -306,8 +306,8 @@ export ANTHROPIC_API_KEY="not-needed"
 
 | 输入的模型 ID | 说明 |
 |--------------|------|
-| `deepseek-web/deepseek-v4` | DeepSeek V4 |
-| `deepseek-web/deepseek-v4-reasoner` | DeepSeek V4 Reasoner（思维链） |
+| `deepseek-web/deepseek-flash` | DeepSeek Flash |
+| `deepseek-web/deepseek-flash-reasoner` | DeepSeek Flash Reasoner（思维链） |
 | `kimi-web/kimi-k2.5` | Kimi K2.5（256K 长上下文） |
 | `qwen-web/qwen-3.5-plus` | 通义千问 3.5 Plus |
 | `qwen-web/qwq` | QwQ（推理模型） |

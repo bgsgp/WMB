@@ -59,7 +59,7 @@ describe('Direct: DeepSeek', () => {
 
     const events = await collectEvents(
       provider.chat({
-        model: 'deepseek-v4',
+        model: 'deepseek-flash',
         messages: [{ role: 'user', content: 'Say exactly: "DIRECT_TEST_OK"' }],
         stream: false,
       })

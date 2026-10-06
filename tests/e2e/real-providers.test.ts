@@ -238,7 +238,7 @@ describe('E2E: Infrastructure', () => {
 describe('E2E: DeepSeek', () => {
   it('non-streaming chat', async () => {
     if (skipIfNotAuth('deepseek-web')) return;
-    const res = await chatCompletion('deepseek-web/deepseek-v4', 'Reply with exactly: "E2E_OK"', false);
+    const res = await chatCompletion('deepseek-web/deepseek-flash', 'Reply with exactly: "E2E_OK"', false);
     console.log(`    status: ${res.status}`);
     if (res.status !== 200) {
       const body = await res.json();
@@ -252,7 +252,7 @@ describe('E2E: DeepSeek', () => {
 
   it('streaming chat', async () => {
     if (skipIfNotAuth('deepseek-web')) return;
-    const res = await chatCompletion('deepseek-web/deepseek-v4', 'Say hello briefly', true);
+    const res = await chatCompletion('deepseek-web/deepseek-flash', 'Say hello briefly', true);
     expect(res.status).toBe(200);
     const text = await res.text();
     // Verify actual content, not just SSE structure

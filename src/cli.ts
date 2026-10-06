@@ -105,7 +105,9 @@ async function launchChromeWithCDP(cdpPort: number, profileDir: string): Promise
     if (os === 'darwin') {
       execSync(`"${chromePath}" ${args} &>/dev/null &`, { shell: '/bin/zsh' });
     } else if (os === 'win32') {
-      execSync(`start "" "${chromePath}" ${args}`, { shell: 'cmd.exe' });
+      // `start` detaches Chrome but the child inherits the pipe handles, which
+      // makes execSync wait forever; bound it and verify via CDP below.
+      execSync(`start "" "${chromePath}" ${args}`, { shell: 'cmd.exe', timeout: 5000, windowsHide: true });
     } else {
       execSync(`"${chromePath}" ${args} &>/dev/null &`, { shell: '/bin/bash' });
     }
