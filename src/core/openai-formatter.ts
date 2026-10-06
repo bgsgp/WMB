@@ -39,6 +39,12 @@ export function formatStreamChunk(
     base.choices[0].delta = isFirst
       ? { role: 'assistant', content: event.delta }
       : { content: event.delta };
+  } else if (event.type === 'error') {
+    // Surface the provider error in-band and terminate with a finish_reason:
+    // otherwise the error message is silently dropped and strict clients
+    // (DSH) report "Stream ended without finish_reason".
+    base.choices[0].delta = { content: `\n[bridge error: ${event.message}]` };
+    base.choices[0].finish_reason = 'stop';
   }
 
   return base;

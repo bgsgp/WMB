@@ -106,6 +106,8 @@ export function anthropicRoutes(registry: ProviderRegistry): Hono {
               await s.write(formatContentBlockDelta(0, event.delta));
             } else if (event.type === 'done') {
               stopReason = streamEventToStopReason(event) ?? 'end_turn';
+            } else if (event.type === 'error') {
+              await s.write(formatContentBlockDelta(0, `\n\nError: ${event.message}`));
             }
           }
         } catch (err) {
