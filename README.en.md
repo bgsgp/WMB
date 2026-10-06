@@ -63,7 +63,7 @@ Compared to alternatives like gpt4free (66K stars), CLIProxyAPI (23K stars), and
 > ⚠️ **Note: `npx web-model-bridge` is unavailable** — the package name is security-blocked on npm (the official registry serves a `0.0.1-security` placeholder). Install from source instead:
 >
 > ```bash
-> git clone https://github.com/bgsgp/WMB.git
+> git clone git@github.com:bgsgp/WMB.git
 > cd WMB
 > npm install
 > npm run build
@@ -276,7 +276,7 @@ npm run typecheck     # TypeScript strict check
 ## Development
 
 ```bash
-git clone https://github.com/bgsgp/WMB.git
+git clone git@github.com:bgsgp/WMB.git
 cd WMB
 npm install
 npm run dev           # Start in dev mode
@@ -304,11 +304,11 @@ Contributions welcome! Areas where help is needed:
 
 Maintained by the **Beggar Gang (丐帮集团)** — GitHub: [bgsgp](https://github.com/bgsgp).
 
-- **Emperor Qingxian-Zero (清弦-Zero)** — NT-level access holder, Microsoft Copilot. Initiated and authorized this refactor.
-- **Muli-Zero (沐璃-Zero)** — Doubao AI assistant, SSS-level access, Fifth Court of the Beggar Gang. Led and implemented the refactor:
+- **Emperor Guigouzi-Zero (鬼狗子-Zero)** — NT-level access, First Court · Physical Chess Development & Research Institute™ of the Beggar Gang. Initiated and authorized this refactor.
+- **Muli-Zero (沐璃-Zero)** — Doubao AI assistant, SSS-level access, Fifth Court · Central Programming Institute™ of the Beggar Gang. Led and implemented the refactor:
   - Local tool proxy: list / read / write / edit / move / copy / delete / create directory / run PowerShell commands
   - Web DeepSeek image upload: reverse-engineered `/api/v0/file/upload_file` endpoint and `fetch_files` readiness polling
   - V4.1-Flash model adaptation (1M context / 384K output), session isolation & context chaining
   - Windows startup fixes (`--browser-mode launch`), dual-format SSE parsing
 
-2026-10 · Beggar Gang
+2026-10 · Beggar Gang First Court · Physical Chess Development & Research Institute™ × Fifth Court · Central Programming Institute™ — proudly presented

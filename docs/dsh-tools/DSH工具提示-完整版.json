@@ -1,0 +1,2296 @@
+[
+  {
+    "pkg": "dsh-tool-ask-user",
+    "name": "ask_user_question",
+    "description": "Ask the user a concise question when you need confirmation, a choice, or missing information before proceeding.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "questions": {
+          "type": "array",
+          "description": "Questions to ask the user before continuing.",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Stable id for this question; echoed in the answer."
+              },
+              "question": {
+                "type": "string",
+                "description": "The specific question to ask the user."
+              },
+              "header": {
+                "type": "string",
+                "description": "Optional short heading for the question, such as \"Confirm\" or \"Choose Mode\"."
+              },
+              "options": {
+                "type": "array",
+                "description": "Optional choices to show the user. If you recommend one, put it first and append \"(Recommended)\" to that label.",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "properties": {
+                    "label": {
+                      "type": "string",
+                      "description": "Short user-facing option label."
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "One sentence explaining the tradeoff or impact."
+                    }
+                  },
+                  "required": [
+                    "label"
+                  ]
+                }
+              },
+              "multi_select": {
+                "type": "boolean",
+                "description": "Whether the user may select more than one option. Defaults to false."
+              }
+            },
+            "required": [
+              "id",
+              "question"
+            ]
+          }
+        }
+      },
+      "required": [
+        "questions"
+      ]
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "answers": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "selected": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "custom": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "selected"
+            ]
+          }
+        }
+      },
+      "required": [
+        "answers"
+      ]
+    }
+  },
+  {
+    "pkg": "dsh-tool-bash",
+    "name": "bash",
+    "description": "Execute a bash command (`bash -c`) and return its stdout/stderr. Each call runs in a fresh shell; pass `workdir` instead of using `cd`. Managed `$DSH_*` variables expose current harness environment facts. Long output is truncated to its tail; the full output is saved to a file whose path is reported when available. Before any delete or move, verify that the resolved absolute target path is the intended one; never run it against a computed path you have not checked. An unset variable expands to an empty string, so guard variables in such paths with `${VAR:?}`. Commands may run under a file sandbox; a blocked file operation is reported as `[sandbox: file access denied under <mode> mode]`, a policy denial: do not retry another way.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "The bash command to execute."
+        },
+        "description": {
+          "type": "string",
+          "description": "Clear, concise description of what this command does in active voice, 5-10 words (shown in the UI). Examples: \"ls\" → \"List files in current directory\"; \"git status\" → \"Show working tree status\"; \"npm install\" → \"Install package dependencies\"."
+        },
+        "timeoutMs": {
+          "type": "number",
+          "description": "Timeout in milliseconds. The executor applies its configured default and cap, and kills the command on expiry."
+        },
+        "workdir": {
+          "type": "string",
+          "description": "Working directory for this command. Defaults to the session workspace; a relative path is resolved against it."
+        }
+      },
+      "required": [
+        "command",
+        "description"
+      ]
+    },
+    "output": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "background"
+            },
+            "jobId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "jobId"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "promoted"
+            },
+            "jobId": {
+              "type": "string"
+            },
+            "timeoutMs": {
+              "type": "number"
+            },
+            "output": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "jobId",
+            "timeoutMs",
+            "output"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "foreground"
+            },
+            "exitCode": {
+              "oneOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "signal": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "timedOut": {
+              "type": "boolean"
+            },
+            "aborted": {
+              "type": "boolean"
+            },
+            "stopped": {
+              "type": "string"
+            },
+            "timeoutMs": {
+              "type": "number"
+            },
+            "stdout": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "truncated": {
+                  "type": "boolean"
+                },
+                "spillPath": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "text",
+                "truncated"
+              ]
+            },
+            "stderr": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "truncated": {
+                  "type": "boolean"
+                },
+                "spillPath": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "text",
+                "truncated"
+              ]
+            },
+            "sandbox": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "mode": {
+                  "type": "string"
+                },
+                "denied": {
+                  "type": "boolean"
+                },
+                "enforcement": {
+                  "type": "string"
+                },
+                "runnerFailed": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "mode",
+                "denied"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "exitCode",
+            "signal",
+            "timedOut",
+            "aborted",
+            "timeoutMs",
+            "stdout",
+            "stderr"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "pkg": "dsh-tool-bash-persistent",
+    "name": "bash",
+    "description": "Run commands in a persistent bash shell. State, including the current directory and exported environment variables, persists across calls for this agent.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "The bash command to run. Relative path is preferred in the command."
+        }
+      },
+      "required": [
+        "command"
+      ]
+    },
+    "output": {
+      "type": "string"
+    }
+  },
+  {
+    "pkg": "dsh-tool-cordis",
+    "name": "cordis_inspect_list",
+    "description": "List every Cordis Inspect Provider currently known to the Host, including local Host Providers and the latest manifests synchronized from the Client. Each entry includes its platform, purpose, read-only methods, and input/output schemas. Call this Tool before writing or configuring a plugin, then select the provider and method for cordis_inspect_query from its result. Do not guess names or treat an Inspect method as a business Service that Plugin code can call.",
+    "parameters": {
+      "type": "object",
+      "properties": {}
+    },
+    "output": {}
+  },
+  {
+    "pkg": "dsh-tool-cordis",
+    "name": "cordis_inspect_query",
+    "description": "Run a read-only query declared by an Inspect Provider. platform, provider, and method must come from cordis_inspect_list, and input must satisfy that method's schema. Use this Tool before writing plugin code to read exact Service methods, Event modes, plugin Config schemas, Tool schemas, theme tokens, or live Slot trees and props. Host queries run locally. A Client query waits for the first valid page response within the configured timeout; otherwise it reports a Client failure or asks you to reconnect and retry. This Tool cannot invoke business Service methods or modify the runtime.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "platform": {
+          "type": "string",
+          "description": "Runtime platform that owns the Provider.",
+          "enum": [
+            "host",
+            "client"
+          ]
+        },
+        "provider": {
+          "type": "string",
+          "description": "Exact Provider ID returned by cordis_inspect_list."
+        },
+        "method": {
+          "type": "string",
+          "description": "Exact method name declared by the Provider manifest."
+        },
+        "input": {
+          "description": "Optional query input; it must satisfy the method input schema."
+        }
+      },
+      "required": [
+        "platform",
+        "provider",
+        "method"
+      ]
+    },
+    "output": {}
+  },
+  {
+    "pkg": "dsh-tool-fs",
+    "name": "read",
+    "description": "Read a UTF-8 text file and return line-numbered content.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "file_path": {
+          "type": "string",
+          "description": "Path to read, resolved by the filesystem backend."
+        },
+        "offset": {
+          "type": "number",
+          "description": "1-based first line to return. Defaults to 1."
+        },
+        "limit": {
+          "type": "number",
+          "description": "Maximum number of lines to return. Defaults to 100000."
+        }
+      },
+      "required": [
+        "file_path"
+      ]
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "offset": {
+          "type": "integer"
+        },
+        "lines": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "number": {
+                "type": "integer"
+              },
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "number",
+              "text"
+            ]
+          }
+        },
+        "totalLines": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "path",
+        "offset",
+        "lines",
+        "totalLines"
+      ]
+    }
+  },
+  {
+    "pkg": "dsh-tool-fs",
+    "name": "read_image",
+    "description": "Read a PNG/JPEG/WebP/GIF file and return the image itself. Large images are downscaled automatically; do not install image libraries or create thumbnails to inspect an image.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "file_path": {
+          "type": "string",
+          "description": "Path to the image file, resolved by the filesystem backend."
+        }
+      },
+      "required": [
+        "file_path"
+      ]
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "image": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "attachmentId": {
+              "type": "string"
+            },
+            "mediaType": {
+              "type": "string",
+              "enum": [
+                "image/png",
+                "image/jpeg",
+                "image/webp",
+                "image/gif"
+              ]
+            },
+            "bytes": {
+              "type": "integer"
+            },
+            "width": {
+              "type": "integer"
+            },
+            "height": {
+              "type": "integer"
+            },
+            "name": {
+              "type": "string"
+            },
+            "originalDimensions": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "width": {
+                  "type": "integer"
+                },
+                "height": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "width",
+                "height"
+              ]
+            }
+          },
+          "required": [
+            "attachmentId",
+            "mediaType",
+            "bytes",
+            "width",
+            "height"
+          ]
+        }
+      },
+      "required": [
+        "path",
+        "image"
+      ]
+    }
+  },
+  {
+    "pkg": "dsh-tool-fs",
+    "name": "write",
+    "description": "Create or fully replace a UTF-8 text file.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "file_path": {
+          "type": "string",
+          "description": "Path to write, resolved by the filesystem backend."
+        },
+        "content": {
+          "type": "string",
+          "description": "Full UTF-8 text content to write."
+        }
+      },
+      "required": [
+        "file_path",
+        "content"
+      ]
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "operation": {
+          "type": "string",
+          "enum": [
+            "create",
+            "update"
+          ]
+        },
+        "before": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "after": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "operation",
+        "before",
+        "after"
+      ]
+    }
+  },
+  {
+    "pkg": "dsh-tool-fs",
+    "name": "edit",
+    "description": "Edit an existing UTF-8 text file by replacing literal text.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "file_path": {
+          "type": "string",
+          "description": "Path to edit, resolved by the filesystem backend."
+        },
+        "old_string": {
+          "type": "string",
+          "description": "Literal text to replace."
+        },
+        "new_string": {
+          "type": "string",
+          "description": "Literal replacement text. Use an empty string to delete the match."
+        },
+        "replace_all": {
+          "type": "boolean",
+          "description": "Replace all matches. Defaults to false; when false, old_string must appear exactly once."
+        }
+      },
+      "required": [
+        "file_path",
+        "old_string",
+        "new_string"
+      ]
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "type": "string"
+        },
+        "before": {
+          "type": "string"
+        },
+        "after": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "before",
+        "after"
+      ]
+    }
+  },
+  {
+    "pkg": "dsh-tool-fs-search",
+    "name": "glob",
+    "description": "Find files, not directories, whose paths match a glob pattern, including hidden and ignored files. Returns up to 100 paths in modification-time order; a larger result keeps the first paths and reports where the complete list was saved.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "pattern": {
+          "type": "string",
+          "description": "Glob pattern to match file paths against (e.g. \"**/*.ts\", \"src/**/*.test.js\"). A pattern with no \"/\" matches the basename at any depth, so \"*\" and \"*.ts\" both search the whole tree; include a separator to anchor the depth."
+        },
+        "path": {
+          "type": "string",
+          "description": "Directory to search in. Defaults to the session workspace; a relative path resolves against it."
+        }
+      },
+      "required": [
+        "pattern"
+      ]
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "root": {
+          "type": "string"
+        },
+        "paths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "root",
+        "paths"
+      ]
+    }
+  },
+  {
+    "pkg": "dsh-tool-fs-search",
+    "name": "grep",
+    "description": "Search file contents with a ripgrep regular expression. Returns matching lines with line numbers, grouped by file. Returns up to 250 matches; a larger result reports where the complete match list was saved.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "pattern": {
+          "type": "string",
+          "description": "Regular expression to search for (ripgrep syntax)."
+        },
+        "path": {
+          "type": "string",
+          "description": "File or directory to search. Defaults to the session workspace; a relative path resolves against it."
+        },
+        "include": {
+          "type": "string",
+          "description": "One glob filter for which files to search (e.g. \"*.ts\", \"*.{js,jsx}\"). Not a list; negation is not supported."
+        }
+      },
+      "required": [
+        "pattern"
+      ]
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "matches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "lineNumber": {
+                "type": "integer"
+              },
+              "line": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "path",
+              "lineNumber",
+              "line"
+            ]
+          }
+        }
+      },
+      "required": [
+        "matches"
+      ]
+    }
+  },
+  {
+    "pkg": "dsh-tool-goal",
+    "name": "get_goal",
+    "description": "Read the current session goal, including the id and revision that update_goal requires.",
+    "parameters": {
+      "type": "object",
+      "properties": {}
+    },
+    "output": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "goal": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "goal"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "goal": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "revision": {
+                  "type": "integer"
+                },
+                "objective": {
+                  "type": "string"
+                },
+                "phase": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "paused",
+                    "blocked",
+                    "complete"
+                  ]
+                },
+                "roundsStarted": {
+                  "type": "integer"
+                },
+                "maxGoalRounds": {
+                  "type": "integer"
+                },
+                "blockedReason": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "revision",
+                "objective",
+                "phase",
+                "roundsStarted",
+                "maxGoalRounds"
+              ]
+            },
+            "activation": {
+              "type": "string",
+              "enum": [
+                "armed",
+                "disarmed"
+              ]
+            }
+          },
+          "required": [
+            "goal",
+            "activation"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "pkg": "dsh-tool-goal",
+    "name": "create_goal",
+    "description": "Create a persisted goal that keeps this session working across automatic continuation rounds. Use it when the direct human request is a long-running objective, even if the user did not say \"goal\"; not for single-turn work.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "objective": {
+          "type": "string",
+          "description": "The concrete completion objective inferred from the direct human request."
+        },
+        "max_goal_rounds": {
+          "type": "number",
+          "description": "Optional positive safe-integer limit on automatic continuation rounds."
+        }
+      },
+      "required": [
+        "objective"
+      ]
+    },
+    "output": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "goal": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "goal"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "goal": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "revision": {
+                  "type": "integer"
+                },
+                "objective": {
+                  "type": "string"
+                },
+                "phase": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "paused",
+                    "blocked",
+                    "complete"
+                  ]
+                },
+                "roundsStarted": {
+                  "type": "integer"
+                },
+                "maxGoalRounds": {
+                  "type": "integer"
+                },
+                "blockedReason": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "revision",
+                "objective",
+                "phase",
+                "roundsStarted",
+                "maxGoalRounds"
+              ]
+            },
+            "activation": {
+              "type": "string",
+              "enum": [
+                "armed",
+                "disarmed"
+              ]
+            }
+          },
+          "required": [
+            "goal",
+            "activation"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "pkg": "dsh-tool-goal",
+    "name": "update_goal",
+    "description": "Update the current goal.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "goal_id": {
+          "type": "string",
+          "description": "Exact id returned by get_goal."
+        },
+        "revision": {
+          "type": "number",
+          "description": "Exact positive revision returned by get_goal."
+        },
+        "action": {
+          "type": "string",
+          "description": "edit, pause, and resume require a direct top-level human request. complete and blocked are also allowed during an automatic continuation of this goal; blocked is rejected before the configured minimum round count.",
+          "enum": [
+            "edit",
+            "pause",
+            "resume",
+            "complete",
+            "blocked"
+          ]
+        },
+        "objective": {
+          "type": "string",
+          "description": "Replacement objective; valid only with action edit."
+        },
+        "max_goal_rounds": {
+          "type": "number",
+          "description": "Replacement cap; valid only with action edit."
+        },
+        "blocked_reason": {
+          "type": "string",
+          "description": "Required only with action blocked: the concrete condition that persisted across rounds and blocks progress."
+        }
+      },
+      "required": [
+        "goal_id",
+        "revision",
+        "action"
+      ]
+    },
+    "output": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "goal": {
+              "type": "null"
+            }
+          },
+          "required": [
+            "goal"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "goal": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "revision": {
+                  "type": "integer"
+                },
+                "objective": {
+                  "type": "string"
+                },
+                "phase": {
+                  "type": "string",
+                  "enum": [
+                    "active",
+                    "paused",
+                    "blocked",
+                    "complete"
+                  ]
+                },
+                "roundsStarted": {
+                  "type": "integer"
+                },
+                "maxGoalRounds": {
+                  "type": "integer"
+                },
+                "blockedReason": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "code": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "revision",
+                "objective",
+                "phase",
+                "roundsStarted",
+                "maxGoalRounds"
+              ]
+            },
+            "activation": {
+              "type": "string",
+              "enum": [
+                "armed",
+                "disarmed"
+              ]
+            }
+          },
+          "required": [
+            "goal",
+            "activation"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "pkg": "dsh-tool-jobs",
+    "name": "job_output",
+    "description": "Read a background job: output since the previous read for stream jobs, or the result of a finished final-output job.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "job_id": {
+          "type": "string",
+          "description": "Job id returned by the tool that started the background work."
+        },
+        "wait": {
+          "type": "boolean",
+          "description": "Block until the job finishes or the timeout expires; a timed-out wait leaves the job running. Defaults to false."
+        },
+        "timeout_ms": {
+          "type": "number",
+          "description": "Max wait in milliseconds with wait: true. Defaults to and is capped by configuration."
+        }
+      },
+      "required": [
+        "job_id"
+      ]
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "type": "string"
+        },
+        "job": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "kind": {
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "running",
+                "stopping",
+                "completed",
+                "killed",
+                "failed"
+              ]
+            },
+            "detail": {
+              "type": "string"
+            },
+            "startedAt": {
+              "type": "integer"
+            },
+            "finishedAt": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "id",
+            "kind",
+            "label",
+            "status",
+            "startedAt"
+          ]
+        }
+      },
+      "required": [
+        "text",
+        "job"
+      ]
+    }
+  },
+  {
+    "pkg": "dsh-tool-jobs",
+    "name": "job_list",
+    "description": "List your background jobs (running and finished) with their ids, kinds, and statuses.",
+    "parameters": {
+      "type": "object",
+      "properties": {}
+    },
+    "output": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "running",
+              "stopping",
+              "completed",
+              "killed",
+              "failed"
+            ]
+          },
+          "detail": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "integer"
+          },
+          "finishedAt": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "label",
+          "status",
+          "startedAt"
+        ]
+      }
+    }
+  },
+  {
+    "pkg": "dsh-tool-jobs",
+    "name": "job_kill",
+    "description": "Request cancellation of a running background job.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "job_id": {
+          "type": "string",
+          "description": "Job id returned by the tool that started the background work."
+        },
+        "reason": {
+          "type": "string",
+          "description": "Optional short reason, recorded in the log and forwarded to the job."
+        }
+      },
+      "required": [
+        "job_id"
+      ]
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "cancellation-requested",
+            "already-finished"
+          ]
+        },
+        "job": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "id": {
+              "type": "string"
+            },
+            "kind": {
+              "type": "string"
+            },
+            "label": {
+              "type": "string"
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "running",
+                "stopping",
+                "completed",
+                "killed",
+                "failed"
+              ]
+            },
+            "detail": {
+              "type": "string"
+            },
+            "startedAt": {
+              "type": "integer"
+            },
+            "finishedAt": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "id",
+            "kind",
+            "label",
+            "status",
+            "startedAt"
+          ]
+        }
+      },
+      "required": [
+        "outcome",
+        "job"
+      ]
+    }
+  },
+  {
+    "pkg": "dsh-tool-present",
+    "name": "present",
+    "description": "Declare existing files as final deliverables for the user. Use it when the user needs a separate file, especially Office documents, spreadsheets, and slide decks; prefer your final response when that suffices. The user opens the current files; their contents are not copied.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "files": {
+          "type": "array",
+          "description": "Usually the 1-2 most important deliverables; at most 4 per call.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "Path of an existing regular file. Relative paths use the Session working directory."
+              },
+              "description": {
+                "type": "string",
+                "description": "Brief description for the user."
+              }
+            },
+            "required": [
+              "path"
+            ]
+          }
+        }
+      },
+      "required": [
+        "files"
+      ]
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "turn": {
+          "type": "integer"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "path": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "path"
+            ]
+          }
+        }
+      },
+      "required": [
+        "turn",
+        "files"
+      ]
+    }
+  },
+  {
+    "pkg": "dsh-tool-pwsh",
+    "name": "pwsh",
+    "description": "Execute a PowerShell command (`pwsh -Command`) and return its stdout/stderr. Each call runs in a fresh pwsh process; pass `workdir` instead of using `cd`. Paths use native Windows form (`C:\\...`); read environment variables with `$env:NAME`. Managed `$env:DSH_*` variables expose current harness environment facts. Long output is truncated to its tail; the full output is saved to a file whose path is reported when available. On Windows a force-killed command settles as `[exit code: 1]` without a signal marker — treat it as an interruption, not a command failure. Before any delete or move, verify that the resolved absolute target path is the intended one; never run it against a computed path you have not checked. Do not assign to automatic variables such as `$HOME`; variable names are case-insensitive, so `$home` is the same read-only variable. Commands may run under a file sandbox; a blocked file operation is reported as `[sandbox: file access denied under <mode> mode]`, a policy denial: do not retry another way.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "The PowerShell command to execute."
+        },
+        "description": {
+          "type": "string",
+          "description": "Clear, concise description of what this command does in active voice, 5-10 words (shown in the UI). Examples: \"ls\" → \"List files in current directory\"; \"git status\" → \"Show working tree status\"; \"Get-Process\" → \"List running processes\"."
+        },
+        "timeoutMs": {
+          "type": "number",
+          "description": "Timeout in milliseconds. The executor applies its configured default and cap, and kills the command on expiry."
+        },
+        "workdir": {
+          "type": "string",
+          "description": "Working directory for this command. Defaults to the session workspace; a relative path is resolved against it."
+        }
+      },
+      "required": [
+        "command",
+        "description"
+      ]
+    },
+    "output": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "background"
+            },
+            "jobId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "jobId"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "promoted"
+            },
+            "jobId": {
+              "type": "string"
+            },
+            "timeoutMs": {
+              "type": "number"
+            },
+            "output": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "jobId",
+            "timeoutMs",
+            "output"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "foreground"
+            },
+            "exitCode": {
+              "oneOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "signal": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "timedOut": {
+              "type": "boolean"
+            },
+            "aborted": {
+              "type": "boolean"
+            },
+            "stopped": {
+              "type": "string"
+            },
+            "timeoutMs": {
+              "type": "number"
+            },
+            "stdout": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "truncated": {
+                  "type": "boolean"
+                },
+                "spillPath": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "text",
+                "truncated"
+              ]
+            },
+            "stderr": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "truncated": {
+                  "type": "boolean"
+                },
+                "spillPath": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "text",
+                "truncated"
+              ]
+            },
+            "sandbox": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "mode": {
+                  "type": "string"
+                },
+                "denied": {
+                  "type": "boolean"
+                },
+                "enforcement": {
+                  "type": "string"
+                },
+                "runnerFailed": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "mode",
+                "denied"
+              ]
+            }
+          },
+          "required": [
+            "kind",
+            "exitCode",
+            "signal",
+            "timedOut",
+            "aborted",
+            "timeoutMs",
+            "stdout",
+            "stderr"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "pkg": "dsh-tool-pwsh-persistent",
+    "name": "pwsh",
+    "description": "Run commands in a persistent PowerShell shell. State, including the current directory and exported environment variables, persists across calls for this agent.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "The PowerShell command to run. Relative path is preferred in the command."
+        }
+      },
+      "required": [
+        "command"
+      ]
+    },
+    "output": {
+      "type": "string"
+    }
+  },
+  {
+    "pkg": "dsh-tool-ralph",
+    "name": "ralph",
+    "description": "Run a foreground fresh-agent Ralph loop toward one immutable objective. Use only when the direct human explicitly asks for Ralph or fresh-agent iteration. Each round opens a new child with no parent conversation or prior child session; the shared workspace is long-term memory, and only a bounded structured report crosses rounds. The call returns when a worker reports completion or a concrete blocker, or at the round limit. Ordinary long-running same-session work belongs to goal tools.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "objective": {
+          "type": "string",
+          "description": "The immutable completion objective for every fresh Ralph round."
+        },
+        "maxRounds": {
+          "type": "number",
+          "description": "Optional positive safe-integer round cap, bounded by the deployment ceiling."
+        }
+      },
+      "required": [
+        "objective"
+      ]
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "runId": {
+          "type": "string"
+        },
+        "agentsStarted": {
+          "type": "integer"
+        },
+        "result": {}
+      },
+      "required": [
+        "runId",
+        "agentsStarted",
+        "result"
+      ]
+    }
+  },
+  {
+    "pkg": "dsh-tool-skill",
+    "name": "skill",
+    "description": "Load the full instructions for a skill. Call it before acting on a task that names or clearly matches a skill in the session skill catalog.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "The exact skill name from the available skills list."
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "provider": {
+          "type": "string"
+        },
+        "resourceBase": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "const": "directory"
+                },
+                "path": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "path"
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "const": "url"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "url"
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "const": "opaque"
+                },
+                "description": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "description"
+              ]
+            }
+          ]
+        },
+        "content": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "provider",
+        "content"
+      ]
+    }
+  },
+  {
+    "pkg": "dsh-tool-str-replace-editor",
+    "name": "str_replace_editor",
+    "description": "Custom editing tool for viewing, creating and editing files\n* State is persistent across command calls and discussions with the user\n* If `path` is a file, `view` displays the result of applying `cat -n`. If `path` is a directory, `view` lists non-hidden files and directories up to 2 levels deep\n* The `create` command cannot be used if the specified `path` already exists as a file\n* If a `command` generates a long output, it will be truncated and marked with `<response clipped>`\n* A null placeholder for a parameter unused by the selected command is treated as omitted. Required parameters still need values; omit `str_replace.new_str` rather than setting it to null when deleting a match\n\nNotes for using the `str_replace` command:\n* The `old_str` parameter should match EXACTLY one or more consecutive lines from the original file. Be mindful of whitespaces!\n* If the `old_str` parameter is not unique in the file, the replacement will not be performed. Make sure to include enough context in `old_str` to make it unique\n* The `new_str` parameter should contain the edited lines that should replace the `old_str`",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "The commands to run. Allowed options are: `view`, `create`, `str_replace`, `insert`.",
+          "enum": [
+            "view",
+            "create",
+            "str_replace",
+            "insert"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "description": "Absolute path to file or directory, e.g. `/repo/file.py` or `/repo`."
+        },
+        "file_text": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Required string parameter of `create` command, with the content of the file to be created. A null placeholder is treated as omitted by commands that do not use this parameter."
+        },
+        "insert_line": {
+          "oneOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Required integer parameter of `insert` command. The `new_str` will be inserted AFTER the line `insert_line` of `path`. A null placeholder is treated as omitted by commands that do not use this parameter."
+        },
+        "new_str": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Optional string parameter of `str_replace` command containing the new string (if omitted, no string will be added). Required string parameter of `insert` command containing the string to insert. A null placeholder is accepted only by commands that do not use this parameter."
+        },
+        "old_str": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Required string parameter of `str_replace` command containing the string in `path` to replace. A null placeholder is treated as omitted by commands that do not use this parameter."
+        },
+        "view_range": {
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "type": "integer"
+              }
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Optional parameter of `view` command when `path` points to a file. If omitted or null, the full file is shown. If provided, the file will be shown in the indicated line number range, e.g. [11, 12] will show lines 11 and 12. Indexing at 1 to start. Setting `[start_line, -1]` shows all lines from `start_line` to the end of the file."
+        }
+      },
+      "required": [
+        "command",
+        "path"
+      ]
+    },
+    "output": {
+      "type": "string"
+    }
+  },
+  {
+    "pkg": "dsh-tool-subagent-control",
+    "name": "send_message",
+    "description": "Send a message to an agent. A working agent receives it at its next step; an idle agent starts a new turn with it. Returns delivery confirmation, not the agent's answer.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "agent_id": {
+          "type": "string",
+          "description": "The agent id of your direct continuable child, or your direct parent when you are a resident continuable child."
+        },
+        "message": {
+          "type": "string",
+          "description": "The message to deliver to the agent."
+        }
+      },
+      "required": [
+        "agent_id",
+        "message"
+      ]
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "messageId": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "messageId"
+      ]
+    }
+  },
+  {
+    "pkg": "dsh-tool-subagent-control",
+    "name": "interrupt_agent",
+    "description": "Ask a subagent to stop its current work. This call returns without waiting for it to stop. You can continue a direct child's conversation later with send_message. Subagents it started will keep running.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "agent_id": {
+          "type": "string",
+          "description": "The id of an agent created under you: your direct child or a deeper descendant."
+        }
+      },
+      "required": [
+        "agent_id"
+      ]
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "accepted": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "accepted"
+      ]
+    }
+  },
+  {
+    "pkg": "dsh-tool-todo",
+    "name": "todo_write",
+    "description": "Record and update a task list to plan multi-step work and show progress; skip it for trivial single-step tasks. Add one todo per concrete step before you start. While work remains, keep the todos being worked on `in_progress`, several only when work runs in parallel. Mark each todo `completed` as soon as it is done.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "todos": {
+          "type": "array",
+          "description": "The COMPLETE task list, replacing any previous list.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "content": {
+                "type": "string",
+                "description": "What the task is — a short imperative line."
+              },
+              "status": {
+                "type": "string",
+                "description": "pending (not started) | in_progress (now) | completed (done).",
+                "enum": [
+                  "pending",
+                  "in_progress",
+                  "completed"
+                ]
+              }
+            },
+            "required": [
+              "content",
+              "status"
+            ]
+          }
+        }
+      },
+      "required": [
+        "todos"
+      ]
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "todos": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "content": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "pending",
+                  "in_progress",
+                  "completed"
+                ]
+              }
+            },
+            "required": [
+              "content",
+              "status"
+            ]
+          }
+        },
+        "counts": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "pending": {
+              "type": "integer"
+            },
+            "inProgress": {
+              "type": "integer"
+            },
+            "completed": {
+              "type": "integer"
+            }
+          },
+          "required": [
+            "pending",
+            "inProgress",
+            "completed"
+          ]
+        }
+      },
+      "required": [
+        "todos",
+        "counts"
+      ]
+    }
+  },
+  {
+    "pkg": "dsh-tool-web",
+    "name": "web_search",
+    "description": "Search the web for current information. Returns an optional summary answer and a list of source URLs.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "queries": {
+          "type": "array",
+          "description": "1–4 search queries; their results are merged.",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "queries"
+      ]
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "content": {
+          "type": "string"
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "url": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "snippet": {
+                "type": "string"
+              },
+              "publishedAt": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "url"
+            ]
+          }
+        },
+        "truncated": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "sources",
+        "truncated"
+      ]
+    }
+  },
+  {
+    "pkg": "dsh-tool-web",
+    "name": "web_fetch",
+    "description": "Fetch the content of a specific HTTP(S) URL and return it decoded to text.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "The HTTP(S) URL to fetch."
+        }
+      },
+      "required": [
+        "url"
+      ]
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "url": {
+          "type": "string"
+        },
+        "statusCode": {
+          "type": "integer"
+        },
+        "body": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "const": "html"
+                },
+                "content": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "content"
+              ]
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "const": "text"
+                },
+                "content": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "kind",
+                "content"
+              ]
+            }
+          ]
+        },
+        "truncated": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "url",
+        "statusCode",
+        "body",
+        "truncated"
+      ]
+    }
+  },
+  {
+    "pkg": "dsh-tool-workflow",
+    "name": "workflow",
+    "description": "Run a JavaScript workflow script that orchestrates subagents at scale. Use this for work that fans out across many independent pieces — an audit over many files, a migration, multi-angle research, adversarial verification of findings — where you write the orchestration as a script instead of delegating turn by turn.\n\nScript-body hooks:\n- `agent(prompt, opts?): Promise<any>` — run one subagent to completion. Without `opts.schema` it resolves to the child's final text; with `opts.schema` (an object-rooted JSON Schema using ONLY type/properties/required/additionalProperties/items/enum/const/oneOf) it resolves to the validated object. Resolves `null` when the child fails (filter with `.filter(Boolean)`). Other opts: `label` (display), `phase` (progress group), and independent `provider`/`model` LLM target overrides.\n- `pipeline(items, ...stages): Promise<any[]>` — run each item through the stages independently with NO barrier between stages (prefer this for multi-stage work). Each stage receives `(prev, item, index)`. A stage throw drops that ITEM to `null` and skips its remaining stages.\n- `parallel(thunks): Promise<any[]>` — run zero-argument functions concurrently and await ALL of them (a barrier; use only when a stage genuinely needs every prior result together). A throwing thunk resolves to `null`.\n- `phase(title)` — start a progress phase; `log(message)` — narrate progress; `args` — the tool call's `args` input, verbatim.\n\nMisused hooks (bad arguments, unknown options, unsupported schemas, tripped caps) end the whole script instead of producing `null`. The script has no filesystem, network, timer, or Node.js APIs; the agents do the work.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "script": {
+          "type": "string",
+          "description": "The plain JavaScript body, not TypeScript and without an `export const meta` statement; top-level await is allowed. End with `return <value>`; the JSON-serializable value is this tool's result."
+        },
+        "meta": {
+          "type": "object",
+          "description": "The workflow identity as plain JSON, not code.",
+          "additionalProperties": true,
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Short kebab-case workflow name."
+            },
+            "description": {
+              "type": "string",
+              "description": "One-line description of what the workflow does."
+            },
+            "whenToUse": {
+              "type": "string",
+              "description": "Optional guidance on when this workflow applies."
+            },
+            "phases": {
+              "type": "array",
+              "description": "Optional phase declarations matched by phase() calls.",
+              "items": {
+                "type": "object",
+                "additionalProperties": true,
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "The phase title phase() calls match by exact string."
+                  },
+                  "detail": {
+                    "type": "string",
+                    "description": "Optional one-line description of the phase."
+                  },
+                  "provider": {
+                    "type": "string",
+                    "description": "Optional provider override this phase is expected to use."
+                  },
+                  "model": {
+                    "type": "string",
+                    "description": "Optional model override this phase is expected to use."
+                  }
+                },
+                "required": [
+                  "title"
+                ]
+              }
+            }
+          },
+          "required": [
+            "name",
+            "description"
+          ]
+        },
+        "args": {
+          "type": "object",
+          "description": "Optional JSON input exposed to the script as the `args` global (wrap a bare list as a field, e.g. {\"files\": [...]}).",
+          "additionalProperties": true
+        },
+        "run_in_background": {
+          "type": "boolean",
+          "description": "Run as a background job: return a job id immediately instead of waiting; the return value arrives with the completion notice."
+        }
+      },
+      "required": [
+        "script",
+        "meta"
+      ]
+    },
+    "output": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "background"
+            },
+            "jobId": {
+              "type": "string"
+            },
+            "runId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "jobId",
+            "runId"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "foreground"
+            },
+            "runId": {
+              "type": "string"
+            },
+            "agentsStarted": {
+              "type": "integer"
+            },
+            "result": {}
+          },
+          "required": [
+            "kind",
+            "runId",
+            "agentsStarted",
+            "result"
+          ]
+        }
+      ]
+    }
+  },
+  {
+    "pkg": "dsh-tool-workspace-dependencies",
+    "name": "load_workspace_dependencies",
+    "description": "Get absolute paths to bundled Python and library directories, plus bundled Python distribution versions. Node.js and pnpm paths are included when the payload provides them. Python includes numpy, pandas, python-docx, python-pptx, openpyxl, Pillow, lxml, and XlsxWriter. Use these libraries for Office files unless the user or workspace instructions select another environment. When Node.js and pnpm paths are returned, run pnpm with that Node executable and pnpm script path. This does not change PATH or package-manager settings.",
+    "parameters": {
+      "type": "object",
+      "properties": {}
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "python": {
+          "type": "string"
+        },
+        "node": {
+          "type": "string",
+          "description": "Absent when the payload ships no Node.js."
+        },
+        "pnpm": {
+          "type": "string",
+          "description": "Absent when the payload ships no pnpm."
+        },
+        "pythonPackages": {
+          "type": "string"
+        },
+        "nodePackages": {
+          "type": "string",
+          "description": "Absent when the payload ships no Node.js."
+        },
+        "pythonDistributions": {
+          "type": "object",
+          "description": "Bundled distribution names and versions recorded in runtime.json; excludes user-installed additions.",
+          "additionalProperties": true
+        }
+      },
+      "required": [
+        "python",
+        "pythonPackages",
+        "pythonDistributions"
+      ]
+    }
+  },
+  {
+    "pkg": "dsh-tool-subagent",
+    "name": "subagent",
+    "description": "Delegate a self-contained task to a subagent (a separate agent that works in its own context) to offload focused, independent work — research, a scoped implementation, an analysis — so it does not consume this conversation's context. The subagent returns its result, not its intermediate steps. This call waits for the result by default.",
+    "parameters": {
+      "type": "object",
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "A short (3-5 word) description of the delegated task, for display."
+        },
+        "prompt": {
+          "type": "string",
+          "description": "The complete, self-contained task for the subagent. It does not share this conversation's context, so include everything it needs."
+        },
+        "run_in_background": {
+          "type": "boolean",
+          "description": "Run as a background job and return its id (collect with job_output, stop with job_kill). Defaults to false."
+        }
+      },
+      "required": [
+        "description",
+        "prompt"
+      ]
+    },
+    "output": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "background"
+            },
+            "jobId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "jobId"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "continuable"
+            },
+            "subagentId": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "subagentId"
+          ]
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "foreground"
+            },
+            "runId": {
+              "type": "string"
+            },
+            "output": {
+              "type": "array",
+              "items": {}
+            }
+          },
+          "required": [
+            "kind",
+            "runId",
+            "output"
+          ]
+        }
+      ]
+    }
+  }
+]
